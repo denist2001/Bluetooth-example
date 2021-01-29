@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Bluetooth Example</string>
+    <string name="is_adapter_exist">Is adapter exist</string>
+</resources>
