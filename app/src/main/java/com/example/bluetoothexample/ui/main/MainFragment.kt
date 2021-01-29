@@ -30,6 +30,11 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: MainFragmentBinding
 
+    override fun onResume() {
+        super.onResume()
+        registerBroadcastReceiver()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = MainFragmentBinding.bind(view)
@@ -87,6 +92,47 @@ class MainFragment : Fragment(R.layout.main_fragment) {
                 Toast.LENGTH_LONG
             )
             .show()
+    }
+
+    private fun registerBroadcastReceiver() {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let { nonNullIntent ->
+                    when (nonNullIntent.action) {
+                        BluetoothDevice.ACTION_FOUND -> {
+                            val device: BluetoothDevice? =
+                                nonNullIntent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice?
+                            Log.d(
+                                this::class.java.name,
+                                "Found device " + device?.getName() + "\n" + device?.getAddress()
+                            )
+                        }
+                        BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                            val state = nonNullIntent.getIntExtra(
+                                BluetoothAdapter.EXTRA_STATE,
+                                BluetoothAdapter.ERROR
+                            )
+                            Log.d(this::class.java.name, "BluetoothAdapter state is $state")
+                        }
+                        BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                            Log.d(this::class.java.name, "Discovery started")
+                        }
+                        BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                            Log.d(this::class.java.name, "Discovery finished")
+                        }
+                        else -> {
+                            Log.d(this::class.java.name, "Something else happened")
+                        }
+                    }
+                }
+            }
+        }
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(BluetoothDevice.ACTION_FOUND)
+        intentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
+        intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        requireContext().registerReceiver(receiver, intentFilter)
     }
 
 }

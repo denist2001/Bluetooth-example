@@ -51,6 +51,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
             })
+            bluetoothAdapter.startDiscovery()
             _state.postValue(
                 MainViewModelState.BluetoothAdapterParameters(
                     ThisDeviseParameters(
