@@ -1,11 +1,15 @@
 package com.example.bluetoothexample.ui.main
 
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanResult
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanSettings
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.bluetoothexample.BLEScanCallbackLollipop
 import com.example.bluetoothexample.ThisDeviseParameters
 
 
@@ -14,6 +18,9 @@ class MainViewModel : ViewModel() {
     private val _state = MutableLiveData<MainViewModelState>()
     val state: LiveData<MainViewModelState>
         get() = _state
+    private val _foundedDevice = MutableLiveData<BluetoothDevice>()
+    val foundedDevice: LiveData<BluetoothDevice>
+        get() = _foundedDevice
 
     private var bluetooth: BluetoothAdapter? = null
 
@@ -23,14 +30,18 @@ class MainViewModel : ViewModel() {
 
     private fun manage(action: MainViewModelAction) {
         when (action) {
-            MainViewModelAction.CheckIfBluetoothAdapterExist -> checkIfBluetoothAdapterExist()
+            is MainViewModelAction.CheckIfBluetoothAdapterExist -> checkIfBluetoothAdapterExist(
+                action.context
+            )
             MainViewModelAction.CheckIfBluetoothAdapterEnabled -> checkIfBluetoothAdapterEnabled()
             MainViewModelAction.GetBluetoothAdapterParameters -> getBluetoothAdapterParameters()
         }
     }
 
-    private fun checkIfBluetoothAdapterExist() {
-        bluetooth = BluetoothAdapter.getDefaultAdapter()
+    private fun checkIfBluetoothAdapterExist(context: Context) {
+        val bluetoothManager =
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetooth = bluetoothManager.adapter
         _state.postValue(MainViewModelState.IsBluetoothAdapterExist(bluetooth != null))
     }
 
@@ -43,14 +54,27 @@ class MainViewModel : ViewModel() {
     private fun getBluetoothAdapterParameters() {
         bluetooth?.let { bluetoothAdapter ->
             val pairedDevices = bluetoothAdapter.bondedDevices
-            bluetoothAdapter.bluetoothLeScanner.startScan(object : ScanCallback() {
-                override fun onScanResult(callbackType: Int, result: ScanResult?) {
-                    super.onScanResult(callbackType, result)
-                    if (result != null) {
-                        val result = result.timestampNanos
-                    }
-                }
-            })
+            pairedDevices?.forEach {
+                Log.e(MainViewModel::class.java.name, "Found paired device with MAC: " + it.address)
+            }
+            val settings = ScanSettings.Builder()
+                .setReportDelay(0)
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                settings.setLegacy(false)
+            }
+            val scannerCallback = BLEScanCallbackLollipop(bluetoothAdapter.bluetoothLeScanner)
+            scannerCallback.channelDevices.observeForever {
+                _foundedDevice.postValue(it)
+            }
+            bluetoothAdapter.bluetoothLeScanner.startScan(
+                emptyList(),
+                settings.build(),
+                scannerCallback
+            )
+            if (!bluetoothAdapter.isDiscovering) {
+                Log.e(MainViewModel::class.java.name, "Discovery canceled.")
+            }
             bluetoothAdapter.startDiscovery()
             _state.postValue(
                 MainViewModelState.BluetoothAdapterParameters(
@@ -65,7 +89,7 @@ class MainViewModel : ViewModel() {
 }
 
 sealed class MainViewModelAction {
-    object CheckIfBluetoothAdapterExist : MainViewModelAction()
+    class CheckIfBluetoothAdapterExist(val context: Context) : MainViewModelAction()
     object CheckIfBluetoothAdapterEnabled : MainViewModelAction()
     object GetBluetoothAdapterParameters : MainViewModelAction()
 }
@@ -73,5 +97,6 @@ sealed class MainViewModelAction {
 sealed class MainViewModelState {
     data class IsBluetoothAdapterExist(val isExist: Boolean) : MainViewModelState()
     data class IsBluetoothAdapterEnabled(val isEnabled: Boolean) : MainViewModelState()
-    data class BluetoothAdapterParameters(val parameters: ThisDeviseParameters) : MainViewModelState()
+    data class BluetoothAdapterParameters(val parameters: ThisDeviseParameters) :
+        MainViewModelState()
 }

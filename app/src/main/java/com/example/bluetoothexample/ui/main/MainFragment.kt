@@ -15,6 +15,8 @@ import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.bluetoothexample.ConnectionsAdapter
 import com.example.bluetoothexample.R
 import com.example.bluetoothexample.ThisDeviseParameters
 import com.example.bluetoothexample.databinding.MainFragmentBinding
@@ -26,6 +28,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         fun newInstance() = MainFragment()
     }
 
+    private lateinit var connectionsAdapter: ConnectionsAdapter
+    private val connectionsList: ArrayList<BluetoothDevice> = ArrayList()
     private val REQUEST_ENABLE_BT = 0
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: MainFragmentBinding
@@ -42,7 +46,11 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         viewModel.state.observe(viewLifecycleOwner) { state ->
             manageState(state)
         }
-        viewModel.onAction(MainViewModelAction.CheckIfBluetoothAdapterExist)
+        viewModel.onAction(MainViewModelAction.CheckIfBluetoothAdapterExist(requireContext()))
+        viewModel.foundedDevice.observe(this) {
+            connectionsList.add(it)
+            connectionsAdapter.notifyDataSetChanged()
+        }
         initUI()
     }
 
@@ -57,6 +65,11 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         binding.isBTEnabledIv.visibility = INVISIBLE
         binding.isBTEnabledIv.setOnClickListener {
             viewModel.onAction(MainViewModelAction.CheckIfBluetoothAdapterEnabled)
+        }
+        connectionsAdapter = ConnectionsAdapter(connectionsList)
+        with(binding.devicesRv) {
+            adapter = connectionsAdapter
+            layoutManager = LinearLayoutManager(requireContext())
         }
     }
 
