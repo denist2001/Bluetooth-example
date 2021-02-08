@@ -11,31 +11,32 @@ import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 class BLEScanCallbackLollipop(private val scanner: BluetoothLeScanner) : ScanCallback() {
     private val handler: Handler = Handler(Looper.getMainLooper())
     private val coroutineScope = CoroutineScope(Job() + Dispatchers.Main)
-    private val devices = mutableMapOf<String, BluetoothDevice>()
-    val channelDevices = MutableLiveData<BluetoothDevice>()
+    private val scanResults = mutableMapOf<String, ScanResultCompat>()
+    val channelDevices = MutableLiveData<ScanResultCompat>()
 
     override fun onScanResult(callbackType: Int, result: ScanResult) {
+
         Log.d("onScanResult", "Discovered bluetoothLE +$result")
-        result.device?.let { bluetoothDevice ->
-            if (devices.containsKey(bluetoothDevice.address)) {
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            && !result.isConnectable) {
+                return
+            }*/
+        ScanResultCompat.from(result).let { scanResultCompat ->
+            if (scanResultCompat.device == null || scanResultCompat.device?.address == null) {
+                return@let
+            }
+            if (scanResults.containsKey(scanResultCompat.device?.address)) {
                 scanner.stopScan(this)
                 return@let
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (result.isConnectable) {
-                    devices[bluetoothDevice.address] = bluetoothDevice
-                }
-            } else {
-                devices[bluetoothDevice.address] = bluetoothDevice
-            }
+            scanResults[scanResultCompat.device!!.address] = scanResultCompat
             coroutineScope.launch {
-                channelDevices.postValue(bluetoothDevice)
+                channelDevices.postValue(scanResultCompat)
             }
         }
 //        if (service.addDiscoveredDevice(from(result)!!)) {

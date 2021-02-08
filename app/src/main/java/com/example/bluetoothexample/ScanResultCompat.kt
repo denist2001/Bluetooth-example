@@ -38,13 +38,7 @@ class ScanResultCompat {
     }
 
     companion object {
-        fun from(lollipopScanResult: Any?): ScanResultCompat? {
-            if (lollipopScanResult == null) {
-                return null
-            }
-
-            val sr = lollipopScanResult as ScanResult
-
+        fun from(sr: ScanResult): ScanResultCompat {
             return ScanResultCompat().apply {
                 device = sr.device
                 rssi = sr.rssi

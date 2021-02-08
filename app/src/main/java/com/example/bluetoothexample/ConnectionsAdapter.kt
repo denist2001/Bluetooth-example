@@ -14,7 +14,7 @@ import java.util.*
 
 class ConnectionsAdapter(var connectionsList: List<BluetoothDevice>) :
     RecyclerView.Adapter<ConnectionsAdapter.ConnectionViewHolder>() {
-    //    private var servicesConnectionsCallback: ServicesConnectionsCallback? = null
+    private var servicesConnectionsCallback: ServicesConnectionsCallback? = null
     var selectedDevice: String? = null
 
     inner class ConnectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -46,18 +46,18 @@ class ConnectionsAdapter(var connectionsList: List<BluetoothDevice>) :
 
             tvName.text = name
             btnConnect.setOnClickListener {
-//                val bluetoothDeviceInfo = BluetoothDeviceInfo()
-//                bluetoothDeviceInfo.device = device
-//                servicesConnectionsCallback?.onDisconnectClicked(bluetoothDeviceInfo)
+                val bluetoothDeviceInfo = BluetoothDeviceInfo()
+                bluetoothDeviceInfo.device = device
+                servicesConnectionsCallback?.onDeviceClicked(bluetoothDeviceInfo)
             }
 
-            layout.setOnClickListener {
+            /*layout.setOnClickListener {
                 progressBar.visibility = View.VISIBLE
                 btnConnect.visibility = View.GONE
-//                val bluetoothDeviceInfo = BluetoothDeviceInfo()
-//                bluetoothDeviceInfo.device = device
-//                servicesConnectionsCallback?.onDeviceClicked(bluetoothDeviceInfo)
-            }
+                val bluetoothDeviceInfo = BluetoothDeviceInfo()
+                bluetoothDeviceInfo.device = device
+                servicesConnectionsCallback?.onDeviceClicked(bluetoothDeviceInfo)
+            }*/
 
         }
     }
@@ -77,8 +77,8 @@ class ConnectionsAdapter(var connectionsList: List<BluetoothDevice>) :
         return connectionsList.size
     }
 
-    /*fun setServicesConnectionsCallback(servicesConnectionsCallback: ServicesConnectionsCallback?) {
+    fun setServicesConnectionsCallback(servicesConnectionsCallback: ServicesConnectionsCallback?) {
         this.servicesConnectionsCallback = servicesConnectionsCallback
-    }*/
+    }
 
 }

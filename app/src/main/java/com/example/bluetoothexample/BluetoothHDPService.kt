@@ -69,7 +69,7 @@ var mClient: Messenger? = null
 private var mBluetoothHealth: BluetoothHealth? = null
 
 private var count = 0
-private val invoke = byteArrayOf(0x00, 0x00)
+private var invoke = byteArrayOf(0x00, 0x00)
 
 private var mHealthAppConfig: BluetoothHealthAppConfiguration? = null
 private var mBluetoothAdapter: BluetoothAdapter? = null

@@ -3,6 +3,7 @@ package com.example.bluetoothexample.ui.main
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.util.Log
@@ -10,6 +11,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.bluetoothexample.BLEScanCallbackLollipop
+import com.example.bluetoothexample.ScanResultCompat
 import com.example.bluetoothexample.ThisDeviseParameters
 
 
@@ -18,8 +20,8 @@ class MainViewModel : ViewModel() {
     private val _state = MutableLiveData<MainViewModelState>()
     val state: LiveData<MainViewModelState>
         get() = _state
-    private val _foundedDevice = MutableLiveData<BluetoothDevice>()
-    val foundedDevice: LiveData<BluetoothDevice>
+    private val _foundedDevice = MutableLiveData<ScanResultCompat>()
+    val foundedDevice: LiveData<ScanResultCompat>
         get() = _foundedDevice
 
     private var bluetooth: BluetoothAdapter? = null
@@ -42,6 +44,7 @@ class MainViewModel : ViewModel() {
         val bluetoothManager =
             context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetooth = bluetoothManager.adapter
+        val listConnectedGattDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
         _state.postValue(MainViewModelState.IsBluetoothAdapterExist(bluetooth != null))
     }
 
@@ -68,8 +71,8 @@ class MainViewModel : ViewModel() {
                 _foundedDevice.postValue(it)
             }
             bluetoothAdapter.bluetoothLeScanner.startScan(
-                emptyList(),
-                settings.build(),
+//                emptyList(),
+//                settings.build(),
                 scannerCallback
             )
             if (!bluetoothAdapter.isDiscovering) {
